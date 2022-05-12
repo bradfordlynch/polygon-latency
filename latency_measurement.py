@@ -72,9 +72,9 @@ def run_rest_test(ticker: str, print_interval: int):
         if n_until_print == 0:
             mu_call = sum([ob[0] for ob in obs]) / len(obs)
             std_call = (sum([(ob[0] - mu_call) ** 2 for ob in obs]) / len(obs)) ** 0.5
-            mu_nbbo_ts = sum([ob[0] for ob in obs]) / len(obs)
+            mu_nbbo_ts = sum([ob[1] for ob in obs]) / len(obs)
             std_nbbo_ts = (
-                sum([(ob[0] - mu_nbbo_ts) ** 2 for ob in obs]) / len(obs)
+                sum([(ob[1] - mu_nbbo_ts) ** 2 for ob in obs]) / len(obs)
             ) ** 0.5
             print(
                 f"mu_call = {mu_call:.1f} ms +/- {std_call:.2f}, mu_nbbo_ts = {mu_nbbo_ts:.1f} ms +/- {std_nbbo_ts:.2f}"
