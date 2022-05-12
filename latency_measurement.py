@@ -92,7 +92,7 @@ if __name__ == "__main__":
     if args.test == "wss":
         c = WebSocketClient(subscriptions=["Q.QQQ"], raw=True)
         processor = partial(handle_msg, print_interval=args.print_interval)
-        c.run(handle_msg)
+        c.run(processor)
     elif args.test == "rest":
         run_rest_test("QQQ", args.print_interval)
     else:
