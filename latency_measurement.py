@@ -23,6 +23,12 @@ def _parse_args():
         default=100,
         help="Interval for computing and displaying stats",
     )
+    parser.add_argument(
+        "--symbol",
+        type=str,
+        default="QQQ",
+        help="symbol to use in latency test",
+    )
     args = parser.parse_args()
 
     return args
@@ -51,11 +57,11 @@ def handle_msg(msgs: Union[str, bytes], print_interval: int):
         print(most_recent)
 
 
-def run_rest_test(ticker: str, print_interval: int):
+def run_rest_test(symbol: str, print_interval: int):
     global n_until_print
     global obs
 
-    uri = f"https://api.polygon.io/v2/last/nbbo/{ticker}"
+    uri = f"https://api.polygon.io/v2/last/nbbo/{symbol}"
     params = {"apiKey": os.environ.get("POLYGON_API_KEY")}
 
     while True:
@@ -90,10 +96,10 @@ if __name__ == "__main__":
     obs = []
 
     if args.test == "wss":
-        c = WebSocketClient(subscriptions=["Q.QQQ"], raw=True)
+        c = WebSocketClient(subscriptions=[f"Q.{args.symbol}"], raw=True)
         processor = partial(handle_msg, print_interval=args.print_interval)
         c.run(processor)
     elif args.test == "rest":
-        run_rest_test("QQQ", args.print_interval)
+        run_rest_test(args.symbol, args.print_interval)
     else:
         raise NotImplementedError(f"Unsupported test {args.test}")
