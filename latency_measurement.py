@@ -95,3 +95,5 @@ if __name__ == "__main__":
         c.run(handle_msg)
     elif args.test == "rest":
         run_rest_test("QQQ", args.print_interval)
+    else:
+        raise NotImplementedError(f"Unsupported test {args.test}")
