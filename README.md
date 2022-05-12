@@ -13,3 +13,4 @@ Similarly, the REST endpoint can be tested via
 ```
 python python latency_measurement.py --test rest
 ```
+For the REST test, two latency statistics are reported. The first is the rounttrip latency of the call itself, the second is the latency of the response relative to the timestamp associated with the NBBO in the response.
