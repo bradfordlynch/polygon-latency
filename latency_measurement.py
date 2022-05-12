@@ -20,7 +20,7 @@ def _parse_args():
     parser.add_argument(
         "--print_interval",
         type=int,
-        default=100,
+        default=1000,
         help="Interval for computing and displaying stats",
     )
     parser.add_argument(
@@ -49,7 +49,7 @@ def handle_msg(msgs: Union[str, bytes], print_interval: int):
         if n_until_print == 0:
             mu = sum(obs) / len(obs)
             std = (sum([(ob - mu) ** 2 for ob in obs]) / len(obs)) ** 0.5
-            print(f"mu_latency = {mu:.1f} ms +/- {std:.2f}")
+            print(f"mu_nbbo_ts = {mu:.1f} ms +/- {std:.2f}")
             n_until_print = print_interval
             obs = []
     except:

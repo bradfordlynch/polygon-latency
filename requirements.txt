@@ -1,0 +1,2 @@
+polygon-api-client==1.0.0b11
+requests==2.27.1
