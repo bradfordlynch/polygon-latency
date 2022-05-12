@@ -1,17 +1,34 @@
+import argparse
+from functools import partial
 import json
+import os
 from typing import Union
 import time
 
 from polygon import WebSocketClient
-
-PRINT_INTERVAL = 10
-
-c = WebSocketClient(subscriptions=["Q.QQQ"], raw=True)
-n_until_print = PRINT_INTERVAL
-obs = []
+import requests
 
 
-def handle_msg(msgs: Union[str, bytes]):
+def _parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--test",
+        type=str,
+        default="wss",
+        help="API to test: wss or rest",
+    )
+    parser.add_argument(
+        "--print_interval",
+        type=int,
+        default=100,
+        help="Interval for computing and displaying stats",
+    )
+    args = parser.parse_args()
+
+    return args
+
+
+def handle_msg(msgs: Union[str, bytes], print_interval: int):
     global n_until_print
     global obs
 
@@ -27,11 +44,54 @@ def handle_msg(msgs: Union[str, bytes]):
             mu = sum(obs) / len(obs)
             std = (sum([(ob - mu) ** 2 for ob in obs]) / len(obs)) ** 0.5
             print(f"mu_latency = {mu:.1f} ms +/- {std:.2f}")
-            n_until_print = PRINT_INTERVAL
+            n_until_print = print_interval
             obs = []
     except:
         # Status message
         print(most_recent)
 
 
-c.run(handle_msg)
+def run_rest_test(ticker: str, print_interval: int):
+    global n_until_print
+    global obs
+
+    uri = f"https://api.polygon.io/v2/last/nbbo/{ticker}"
+    params = {"apiKey": os.environ.get("POLYGON_API_KEY")}
+
+    while True:
+        ts_req = time.time_ns()
+        resp = requests.get(uri, params=params)
+        ts_resp = time.time_ns()
+        dt_call = (ts_resp - ts_req) / 1e6
+        nbbo = resp.json()["results"]
+        dt_nbbo_ts = (ts_resp - nbbo["t"]) / 1e6
+
+        obs.append((dt_call, dt_nbbo_ts))
+        n_until_print -= 1
+
+        if n_until_print == 0:
+            mu_call = sum([ob[0] for ob in obs]) / len(obs)
+            std_call = (sum([(ob[0] - mu_call) ** 2 for ob in obs]) / len(obs)) ** 0.5
+            mu_nbbo_ts = sum([ob[0] for ob in obs]) / len(obs)
+            std_nbbo_ts = (
+                sum([(ob[0] - mu_nbbo_ts) ** 2 for ob in obs]) / len(obs)
+            ) ** 0.5
+            print(
+                f"mu_call = {mu_call:.1f} ms +/- {std_call:.2f}, mu_nbbo_ts = {mu_nbbo_ts:.1f} ms +/- {std_nbbo_ts:.2f}"
+            )
+            n_until_print = print_interval
+            obs = []
+
+
+if __name__ == "__main__":
+    args = _parse_args()
+
+    n_until_print = args.print_interval
+    obs = []
+
+    if args.test == "wss":
+        c = WebSocketClient(subscriptions=["Q.QQQ"], raw=True)
+        processor = partial(handle_msg, print_interval=args.print_interval)
+        c.run(handle_msg)
+    elif args.test == "rest":
+        run_rest_test("QQQ", args.print_interval)
